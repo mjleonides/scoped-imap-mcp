@@ -1,0 +1,8 @@
+services:
+  scoped-imap-mcp:
+    build: .
+    env_file:
+      - .env
+    read_only: true
+    security_opt:
+      - no-new-privileges:true

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "scoped-imap-mcp"
+version = "0.1.0"
+description = "A read-only, folder-scoped IMAP MCP server"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "html2text>=2024.2.26",
+  "mcp>=2.3.0,<3.0.0",
+  "pydantic-settings>=2.0.0",
+]
+
+[project.scripts]
+scoped-imap-mcp = "scoped_imap_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/scoped_imap_mcp"]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
