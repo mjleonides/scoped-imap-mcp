@@ -158,7 +158,7 @@ class ScopedIMAPClient:
     ) -> tuple[str, ...]:
         """Return matching stable UIDs from an explicitly permitted folder."""
         connection = self._require_connection()
-        self._examine(folder)
+        self._select_readonly(folder)
         criteria = build_search_criteria(
             query=query,
             sender=sender,
@@ -176,13 +176,13 @@ class ScopedIMAPClient:
     ) -> tuple[MessageMetadata, ...]:
         """Fetch selected message headers without marking messages as read."""
         connection = self._require_connection()
-        self._examine(folder)
+        self._select_readonly(folder)
         return tuple(self._fetch_one_metadata(connection, uid) for uid in uids)
 
     def fetch_body(self, folder: str, uid: str) -> MessageBody:
         """Fetch one message body without setting its ``\\Seen`` flag."""
         connection = self._require_connection()
-        self._examine(folder)
+        self._select_readonly(folder)
         self._validate_uid(uid)
         status, data = connection.uid("FETCH", uid, "(BODY.PEEK[])")
         self._require_ok((status, data), "fetch message body")
@@ -216,10 +216,12 @@ class ScopedIMAPClient:
             self._require_ok(connection.starttls(ssl_context=context), "start TLS")
         return connection
 
-    def _examine(self, folder: str) -> None:
+    def _select_readonly(self, folder: str) -> None:
         # Enforce scope before emitting any protocol command for this folder.
         allowed_folder = self._settings.validate_folder_access(folder)
-        self._require_ok(self._require_connection().examine(allowed_folder), "open folder")
+        self._require_ok(
+            self._require_connection().select(allowed_folder, readonly=True), "open folder"
+        )
 
     def _fetch_one_metadata(
         self, connection: imaplib.IMAP4, uid: str

@@ -27,7 +27,7 @@ class FakeIMAP:
     def __init__(self) -> None:
         self.commands: list[tuple[object, ...]] = []
         self.login_response = ("OK", [b"Logged in"])
-        self.examine_response = ("OK", [b"1"])
+        self.select_response = ("OK", [b"1"])
         self.search_response = ("OK", [b"101 102"])
         self.fetch_response = (
             "OK",
@@ -50,9 +50,9 @@ class FakeIMAP:
         self.commands.append(("STARTTLS", ssl_context))
         return "OK", [b"TLS active"]
 
-    def examine(self, folder: str) -> tuple[str, list[bytes]]:
-        self.commands.append(("EXAMINE", folder))
-        return self.examine_response
+    def select(self, folder: str, readonly: bool = False) -> tuple[str, list[bytes]]:
+        self.commands.append(("SELECT", folder, readonly))
+        return self.select_response
 
     def uid(self, command: str, *args: object) -> tuple[str, list[object]]:
         self.commands.append(("UID", command, *args))
@@ -78,7 +78,7 @@ def install_ssl_connection(monkeypatch: pytest.MonkeyPatch, fake: FakeIMAP) -> l
     return constructor_calls
 
 
-def test_search_uses_examine_and_uid_search_without_mutation(
+def test_search_uses_readonly_select_and_uid_search_without_mutation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake = FakeIMAP()
@@ -97,7 +97,7 @@ def test_search_uses_examine_and_uid_search_without_mutation(
     assert constructor_calls[0][0] == ("mail.example.test", 993)
     assert fake.commands == [
         ("LOGIN", "user@example.test", "secret"),
-        ("EXAMINE", "Receipts"),
+        ("SELECT", "Receipts", True),
         (
             "UID",
             "SEARCH",
@@ -113,7 +113,7 @@ def test_search_uses_examine_and_uid_search_without_mutation(
         ),
         ("LOGOUT",),
     ]
-    assert all(command[0] != "SELECT" for command in fake.commands)
+    assert all(command[0] != "EXAMINE" for command in fake.commands)
 
 
 def test_unlisted_folder_is_rejected_without_an_imap_command(
