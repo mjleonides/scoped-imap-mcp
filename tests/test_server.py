@@ -12,6 +12,7 @@ def settings(**overrides: object) -> Settings:
         "imap_user": "user@example.test",
         "imap_password": "secret",
         "imap_allowed_folders": "Receipts",
+        "mcp_bearer_token": "token",
     }
     values.update(overrides)
     return Settings(**values)
@@ -118,16 +119,60 @@ def test_search_uses_single_folder_default_through_mcp(
     ]
 
 
-def test_main_loads_settings_before_starting_stdio(monkeypatch: object) -> None:
+def test_main_starts_authenticated_streamable_http_server(monkeypatch: object) -> None:
     configured_settings = settings()
     mcp_server = Mock()
+    app = object()
+    mcp_server.streamable_http_app.return_value = app
+    run = Mock()
     monkeypatch.setattr(server_module, "load_settings", lambda: configured_settings)
     monkeypatch.setattr(
         server_module,
         "create_server",
         lambda received_settings: mcp_server,
     )
+    monkeypatch.setattr(server_module.uvicorn, "run", run)
 
     server_module.main()
 
-    mcp_server.run.assert_called_once_with(transport="stdio")
+    mcp_server.streamable_http_app.assert_called_once_with(
+        streamable_http_path="/mcp", host="0.0.0.0"
+    )
+    wrapped_app = run.call_args.args[0]
+    assert isinstance(wrapped_app, server_module.BearerTokenMiddleware)
+    run.assert_called_once_with(wrapped_app, host="0.0.0.0", port=8000, log_level="info")
+
+
+def test_bearer_token_middleware_rejects_missing_token() -> None:
+    downstream = Mock()
+    sent: list[dict[str, object]] = []
+
+    async def send(message: dict[str, object]) -> None:
+        sent.append(message)
+
+    asyncio.run(
+        server_module.BearerTokenMiddleware(downstream, "expected")(
+            {"type": "http", "headers": []}, Mock(), send
+        )
+    )
+
+    downstream.assert_not_called()
+    assert sent[0]["status"] == 401
+    assert (b"www-authenticate", b"Bearer") in sent[0]["headers"]
+
+
+def test_bearer_token_middleware_allows_valid_token() -> None:
+    calls: list[object] = []
+
+    async def downstream(*args: object) -> None:
+        calls.append(args)
+
+    asyncio.run(
+        server_module.BearerTokenMiddleware(downstream, "expected")(
+            {"type": "http", "headers": [(b"authorization", b"Bearer expected")]},
+            Mock(),
+            Mock(),
+        )
+    )
+
+    assert len(calls) == 1

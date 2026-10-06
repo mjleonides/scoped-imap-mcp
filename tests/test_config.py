@@ -12,6 +12,7 @@ def settings(**overrides: object) -> Settings:
         "imap_user": "user@example.test",
         "imap_password": "secret",
         "imap_allowed_folders": "Labels/Amazon",
+        "mcp_bearer_token": "token",
     }
     values.update(overrides)
     return Settings(**values)
@@ -78,6 +79,25 @@ def test_default_ports_follow_transport_mode() -> None:
     assert settings(imap_ssl=False, imap_starttls=True).resolved_port == 143
 
 
+def test_mcp_http_defaults() -> None:
+    config = settings()
+
+    assert config.mcp_host == "0.0.0.0"
+    assert config.mcp_port == 8000
+    assert config.mcp_path == "/mcp"
+
+
+@pytest.mark.parametrize("token", ["", "   "])
+def test_empty_bearer_token_is_rejected(token: str) -> None:
+    with pytest.raises(ValidationError, match="must not be empty"):
+        settings(mcp_bearer_token=token)
+
+
+def test_mcp_path_must_be_absolute() -> None:
+    with pytest.raises(ValidationError, match="must start with /"):
+        settings(mcp_path="mcp")
+
+
 def test_environment_overrides_selected_env_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -89,6 +109,7 @@ def test_environment_overrides_selected_env_file(
                 "IMAP_USER=user@example.test",
                 "IMAP_PASSWORD=secret",
                 "IMAP_ALLOWED_FOLDERS=Receipts",
+                "MCP_BEARER_TOKEN=from-file-token",
             ]
         )
     )

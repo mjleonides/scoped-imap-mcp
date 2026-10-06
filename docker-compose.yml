@@ -3,6 +3,8 @@ services:
     build: .
     env_file:
       - .env
+    ports:
+      - "8000:8000"
     read_only: true
     security_opt:
       - no-new-privileges:true

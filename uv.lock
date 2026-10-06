@@ -769,6 +769,7 @@ dependencies = [
     { name = "html2text" },
     { name = "mcp" },
     { name = "pydantic-settings" },
+    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
@@ -781,6 +782,7 @@ requires-dist = [
     { name = "html2text", specifier = ">=2024.2.26" },
     { name = "mcp", specifier = ">=2.3.0,<3.0.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "uvicorn", specifier = ">=0.31.1" },
 ]
 
 [package.metadata.requires-dev]

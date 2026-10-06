@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     imap_allowed_folders: str
     max_body_chars: int = Field(default=50_000, gt=0)
     log_level: str = "INFO"
+    mcp_bearer_token: str
+    mcp_host: str = "0.0.0.0"
+    mcp_port: int = Field(default=8000, gt=0, le=65535)
+    mcp_path: str = "/mcp"
 
     @field_validator("imap_host", "imap_user", "imap_password")
     @classmethod
@@ -40,6 +44,21 @@ class Settings(BaseSettings):
         value = value.strip()
         if not value:
             raise ValueError("must not be empty")
+        return value
+
+    @field_validator("mcp_bearer_token")
+    @classmethod
+    def require_bearer_token(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be empty")
+        return value
+
+    @field_validator("mcp_path")
+    @classmethod
+    def require_absolute_mcp_path(cls, value: str) -> str:
+        if not value.startswith("/"):
+            raise ValueError("must start with /")
         return value
 
     @field_validator("imap_allowed_folders")

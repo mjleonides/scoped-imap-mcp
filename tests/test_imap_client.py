@@ -17,6 +17,7 @@ def settings(**overrides: object) -> Settings:
         "imap_user": "user@example.test",
         "imap_password": "secret",
         "imap_allowed_folders": "Receipts",
+        "mcp_bearer_token": "token",
     }
     values.update(overrides)
     return Settings(**values)

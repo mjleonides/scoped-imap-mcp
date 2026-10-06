@@ -13,6 +13,7 @@ dependencies = [
   "html2text>=2024.2.26",
   "mcp>=2.3.0,<3.0.0",
   "pydantic-settings>=2.0.0",
+  "uvicorn>=0.31.1",
 ]
 
 [project.scripts]
