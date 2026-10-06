@@ -23,7 +23,7 @@
 - [x] Fetch message metadata without mutation-capable IMAP commands.
 - [x] Implement MIME extraction, HTML-to-Markdown conversion, and body truncation.
 - [x] Register MCP tools for searching, reading, and listing allowed folders.
-- [ ] Validate the documented `uv` workflow.
+- [x] Validate the documented `uv` workflow.
 - [x] Build and validate the Docker image and Compose configuration.
 - [ ] Test against Proton Mail Bridge or another target IMAP service.
 - [ ] Expand operational and client-integration documentation.
@@ -33,4 +33,7 @@
 - `pytest`: 26 tests passed using Python 3.14.7 after the MCP 2.x migration.
 - Docker image and Compose startup were validated with a non-secret temporary
   configuration using MCP 2.3.0.
-- `uv` and Docker were unavailable in the development environment, so their workflows remain unverified.
+- `uv sync --group dev`, `uv run pytest`, and both documented stdio entry
+  points were validated with uv 0.12.23 and Python 3.14.8; 26 tests passed.
+- Docker was unavailable in the development environment, so its workflow
+  remains unverified.
